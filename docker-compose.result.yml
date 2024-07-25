@@ -1,0 +1,26 @@
+# version is now using "compose spec"
+# v2 and v3 are now combined!
+# docker-compose v1.27+ required
+
+services:
+  result:
+    build: ./result
+    # use nodemon rather than node for local dev
+    entrypoint: nodemon --inspect=0.0.0.0 server.js
+    volumes:
+      - ./result:/usr/local/app
+    ports:
+      - "80:80"
+      - "9229:9229"
+    environment:
+      - DB=${DB}
+      - WORKER=${WORKER}
+      - VOTE=${VOTE}
+      - RESULT=${RESULT}
+      - REDIS=${REDIS}
+    extra_hosts:
+      - db:${DB}
+      - worker:${WORKER}
+      - vote:${VOTE}
+      - result:${RESULT}
+      - redis:${REDIS}

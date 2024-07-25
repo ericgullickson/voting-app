@@ -1,0 +1,20 @@
+# version is now using "compose spec"
+# v2 and v3 are now combined!
+# docker-compose v1.27+ required
+
+services:
+  worker:
+    build:
+      context: ./worker
+    environment:
+      - DB=${DB}
+      - WORKER=${WORKER}
+      - VOTE=${VOTE}
+      - RESULT=${RESULT}
+      - REDIS=${REDIS}
+    extra_hosts:
+      - db:${DB}
+      - worker:${WORKER}
+      - vote:${VOTE}
+      - result:${RESULT}
+      - redis:${REDIS}
