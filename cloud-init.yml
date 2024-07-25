@@ -1,0 +1,24 @@
+#cloud-config
+users:
+  - default
+  - name: nutanix
+    gecos: Nutanix User
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    shell: /bin/bash
+    groups: sudo
+      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCk8XyCxdxowRoY6yokk3tY8sICDf4AALTMf2r+Pc5cuh2keEGsBWsx70Z6Hh/aLK39T6122uqjJ65EB5pgag+7RV5MDifBju+QDc1/TdMG3fLRk9K5RDt7lc+WCUrn272zimw+OxfSO1TPW5HO5eJO9Br0FawJ2XS6HXRHieuEkUf6mNWyD3z+IPkBeWe8fjapjt0tbgsYICHpWxCA0B0XDCNXI22F470pL0YkUxccnP9cJig/1J0W3ZqSzlM0RmzNRFDsG1Hn8CjLG126IPRHPLsoic0D9cjaaseTizREp4yEXKLhVnMPvEGt0ciCix14tHum+sXwjJ/6Z3X8yMiN eric.gullickson@nutanix.com
+chpasswd:
+  expire: false
+  users:
+  - name: nutanix
+    password: nutanix/4u
+    type: text
+ssh_pwauth: True
+package_upgrade: true
+package_reboot_if_required: true
+locale: en_US.UTF-8
+timezone: America/Chicago
+packages:
+  - git
+runcmd:
+  - sudo git clone https://github.com/ericgullickson/voting-app.git /home/nutanix/voting-app/
