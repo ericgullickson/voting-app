@@ -2,7 +2,7 @@
 <html ng-app="optionavsb">
   <head>
     <meta charset="utf-8">
-    <title>{{process.env.OPTION_A}} vs {{process.env.OPTION_B}} -- Result</title>
+    <title>{{optionA}} vs {{optionB}} -- Result</title>
     <base href="/index.html">
     <meta name = "viewport" content = "width=device-width, initial-scale = 1.0">
     <meta name="keywords" content="docker-compose, docker, stack">
@@ -20,12 +20,12 @@
       <div id="content-container-center">
         <div id="choice">
           <div class="choice a">
-            <div class="label">{{process.env.OPTION_A}}</div>
+            <div class="label">{{optionA}}</div>
             <div class="stat">{{aPercent | number:1}}%</div>
           </div>
           <div class="divider"></div>
           <div class="choice b">
-            <div class="label">process.env.OPTION_B</div>
+            <div class="label">{{optionB}}</div>
             <div class="stat">{{bPercent | number:1}}%</div>
           </div>
         </div>
