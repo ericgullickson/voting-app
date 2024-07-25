@@ -12,6 +12,8 @@ services:
       - VOTE=${VOTE}
       - RESULT=${RESULT}
       - REDIS=${REDIS}
+      - OPTION_A=${OPTION_A}
+      - OPTION_B=${OPTION_B}
     extra_hosts:
       - db:${DB}
       - worker:${WORKER}
