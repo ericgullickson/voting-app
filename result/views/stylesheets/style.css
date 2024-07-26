@@ -25,11 +25,11 @@ body{
 }
 
 #background-stats-1{
-  background-color: #2196f3;
+  background-color: #4B00AA;
 }
 
 #background-stats-2{
-  background-color: #00cbca;
+  background-color: #7855FA;
 }
 
 #content-container{
@@ -89,12 +89,12 @@ body{
 }
 
 #choice .choice.a{
-  color: #00cbca;
+  color: #4B00AA;
   float: right;
 }
 
 #choice .choice.b{
-  color: #2196f3;
+  color: #7855FA;
   float: left;
 }
 #background-stats{
