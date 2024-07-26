@@ -8,6 +8,12 @@ app.controller('statsCtrl', function($scope){
   $scope.aPercent = 50;
   $scope.bPercent = 50;
 
+   // Fetch options from the server
+   $http.get('/config').then(function(response) {
+    $scope.optionA = response.data.optionA;
+    $scope.optionB = response.data.optionB;
+  });
+  
   var updateScores = function(){
     socket.on('scores', function (json) {
        data = JSON.parse(json);
@@ -23,8 +29,6 @@ app.controller('statsCtrl', function($scope){
          $scope.aPercent = percentages.a;
          $scope.bPercent = percentages.b;
          $scope.total = a + b;
-         $scope.optionA = process.env.OPTION_A
-         $scope.optionB = process.env.OPTION_B
        });
     });
   };

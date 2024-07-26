@@ -7,6 +7,9 @@ var express = require('express'),
     io = require('socket.io')(server);
 
 var port = process.env.PORT || 4000;
+var optionA = process.env.OPTION_A || 'Cats';  // Provide default values if not set
+var optionB = process.env.OPTION_B || 'Dogs';  // Provide default values if not set
+
 
 io.on('connection', function (socket) {
 
@@ -69,6 +72,10 @@ app.use(express.static(__dirname + '/views'));
 
 app.get('/', function (req, res) {
   res.sendFile(path.resolve(__dirname + '/views/index.html'));
+});
+
+app.get('/config', function (req, res) {
+  res.json({ optionA: optionA, optionB: optionB });
 });
 
 server.listen(port, function () {
