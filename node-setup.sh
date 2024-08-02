@@ -20,8 +20,9 @@ if [[ " ${VALID_WORDS[@]} " =~ " $1 " ]]; then
   #Install docker 
   sudo dnf -y install docker-ce docker-ce-cli containerd.io
   #
-  #Start Docker service
+  #Start and Enable Docker service
   sudo systemctl start docker
+  sudo systemctl enable docker
   #
   #Start the container depending on parameter
   sudo docker compose --file ./docker-compose.$1.yml up -d
