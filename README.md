@@ -12,12 +12,15 @@ Clone the repo into a directory.
 
 Edit the .env file with the IP addresses of all the nodes deployed. 
 
-Run in this directory to build and run the app:
+You need to have python and pip installed on your local machine. Run this to install the requirements:
 
 ```shell
-sudo /bin/bash ./node-setup.sh db
+  pip install -r requirements.txt
 ```
-
+Then deploy the app giving it the IP addresses of the VM's.
+```
+  python3 deploy_voting_app.py
+```
 
 ## Run the app in Kubernetes
 

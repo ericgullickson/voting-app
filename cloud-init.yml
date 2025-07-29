@@ -6,6 +6,10 @@ users:
     sudo: ALL=(ALL) NOPASSWD:ALL
     shell: /bin/bash
     groups: sudo
+    # Replace with your own public key
+    ssh_authorized_keys:
+      - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHHYn7c3o3xVWRFmZDH6UkuSSW7Vlo6HQnK4IN85ITLc nutanix@local
+
 chpasswd:
   expire: false
   users:
@@ -19,6 +23,177 @@ locale: en_US.UTF-8
 timezone: America/Chicago
 packages:
   - git
+  - curl
+  - ca-certificates
 runcmd:
+  # Clone voting app git repo
   - sudo git clone https://github.com/ericgullickson/voting-app.git /home/nutanix/voting-app/
+  # Set default nutanix username and password
   - echo 'nutanix:nutanix/4u' | sudo chpasswd
+  # Function to detect package manager and distribution family
+  - |
+    detect_system() {
+      if [ -f /etc/os-release ]; then
+        . /etc/os-release
+        OS_ID=$ID
+        OS_ID_LIKE=$ID_LIKE
+        VERSION_CODENAME=$VERSION_CODENAME
+        VERSION_ID=$VERSION_ID
+      fi
+      
+      # Determine package manager and distribution family
+      if command -v apt-get >/dev/null 2>&1; then
+        PKG_MANAGER="apt"
+        DISTRO_FAMILY="debian"
+      elif command -v dnf >/dev/null 2>&1; then
+        PKG_MANAGER="dnf"
+        DISTRO_FAMILY="rhel"
+      elif command -v yum >/dev/null 2>&1; then
+        PKG_MANAGER="yum"
+        DISTRO_FAMILY="rhel"
+      elif command -v zypper >/dev/null 2>&1; then
+        PKG_MANAGER="zypper"
+        DISTRO_FAMILY="suse"
+      else
+        echo "No supported package manager found"
+        exit 1
+      fi
+      
+      echo "Detected OS: $OS_ID"
+      echo "Package Manager: $PKG_MANAGER"
+      echo "Distribution Family: $DISTRO_FAMILY"
+    }
+    
+    # Install prerequisites based on package manager
+    install_prerequisites() {
+      case $PKG_MANAGER in
+        apt)
+          apt-get update
+          apt-get install -y gnupg lsb-release software-properties-common apt-transport-https
+          ;;
+        dnf)
+          dnf install -y yum-utils device-mapper-persistent-data lvm2 gnupg2
+          ;;
+        yum)
+          yum install -y yum-utils device-mapper-persistent-data lvm2
+          ;;
+        zypper)
+          zypper install -y curl gnupg2
+          ;;
+      esac
+    }
+    
+    # Install Docker based on distribution family
+    install_docker() {
+      case $DISTRO_FAMILY in
+        debian)
+          echo "Installing Docker on Debian-based system..."
+          
+          # Determine the appropriate Docker repository
+          if [[ "$OS_ID" == "ubuntu" ]]; then
+            DOCKER_REPO="ubuntu"
+            CODENAME=$(lsb_release -cs)
+          elif [[ "$OS_ID" == "debian" ]]; then
+            DOCKER_REPO="debian"
+            CODENAME=$(lsb_release -cs)
+          elif [[ "$OS_ID_LIKE" == *"ubuntu"* ]]; then
+            DOCKER_REPO="ubuntu"
+            CODENAME=$(lsb_release -cs)
+          elif [[ "$OS_ID_LIKE" == *"debian"* ]]; then
+            DOCKER_REPO="debian"
+            CODENAME=$(lsb_release -cs)
+          else
+            # Fallback to Ubuntu for other Debian-based distros
+            DOCKER_REPO="ubuntu"
+            CODENAME="jammy"  # Use LTS as fallback
+          fi
+          
+          # Add Docker's official GPG key
+          install -m 0755 -d /etc/apt/keyrings
+          curl -fsSL https://download.docker.com/linux/$DOCKER_REPO/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+          chmod a+r /etc/apt/keyrings/docker.gpg
+          
+          # Add Docker repository
+          echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/$DOCKER_REPO $CODENAME stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
+          
+          # Install Docker
+          apt-get update
+          apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+          ;;
+          
+        rhel)
+          echo "Installing Docker on RHEL-based system..."
+          
+          # Add Docker repository
+          $PKG_MANAGER config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+          
+          # Install Docker
+          $PKG_MANAGER install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+          ;;
+          
+        suse)
+          echo "Installing Docker on SUSE-based system..."
+          
+          # Add Docker repository for openSUSE
+          zypper addrepo https://download.docker.com/linux/centos/docker-ce.repo
+          zypper refresh
+          
+          # Install Docker
+          zypper install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+          ;;
+          
+        *)
+          echo "Unsupported distribution family: $DISTRO_FAMILY"
+          exit 1
+          ;;
+      esac
+    }
+    
+    # Add users to docker group
+    add_users_to_docker_group() {
+      # List of common default users across distributions
+      POTENTIAL_USERS="cloud-user ubuntu debian rocky centos suse opensuse ec2-user admin user"
+      
+      for username in $POTENTIAL_USERS; do
+        if id "$username" &>/dev/null; then
+          echo "Adding $username to docker group"
+          usermod -aG docker "$username"
+        fi
+      done
+      
+      # Also add the user who owns /home/* directories
+      for homedir in /home/*; do
+        if [ -d "$homedir" ]; then
+          username=$(basename "$homedir")
+          if id "$username" &>/dev/null; then
+            echo "Adding $username to docker group"
+            usermod -aG docker "$username"
+          fi
+        fi
+      done
+    }
+    
+    # Main execution
+    detect_system
+    install_prerequisites
+    install_docker
+    
+    # Enable and start Docker service
+    systemctl enable docker
+    systemctl start docker
+    
+    # Add users to docker group
+    add_users_to_docker_group
+    
+    # Verify Docker installation
+    echo "Verifying Docker installation..."
+    docker --version
+    systemctl status docker --no-pager
+    
+    echo "Docker installation completed successfully on $OS_ID!"
+
+# Reboot after installation
+power_state:
+  mode: reboot
+  message: "Rebooting after Docker installation"
+  timeout: 60
