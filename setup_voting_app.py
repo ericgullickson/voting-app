@@ -17,6 +17,14 @@ def main():
             sys.exit(1)
         ips[service] = ip
     
+    option_a = input("Option A (default: Hi-C): ").strip()
+    if not option_a:
+        option_a = "Hi-C"
+    
+    option_b = input("Option B (default: Tang): ").strip()
+    if not option_b:
+        option_b = "Tang"
+    
     username = input("SSH Username: ").strip()
     if not username:
         print("Error: Username cannot be empty")
@@ -34,14 +42,6 @@ def main():
                 break
     else:
         ssh_key_path = os.path.expanduser(ssh_key_path)
-    
-    option_a = input("Option A (default: Hi-C): ").strip()
-    if not option_a:
-        option_a = "Hi-C"
-    
-    option_b = input("Option B (default: Tang): ").strip()
-    if not option_b:
-        option_b = "Tang"
     
     password = None
     if not ssh_key_path or not os.path.exists(ssh_key_path):
