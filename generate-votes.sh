@@ -7,9 +7,9 @@ MIN_INTERVAL=1    # minimum seconds between batches
 MAX_INTERVAL=10   # maximum seconds between batches
 CONCURRENCY=50    # concurrent requests per batch
 
-# Post data files (assuming these exist)
-POST_A="posta"
-POST_B="postb"
+# Post data (inline, no external files needed)
+POST_DATA_A="vote=a"
+POST_DATA_B="vote=b"
 
 # Prompt user for configuration
 echo "Random Voting Script"
@@ -66,20 +66,49 @@ random_between() {
     echo $((RANDOM % (max - min + 1) + min))
 }
 
-# Function to send votes
+# Function to send a single vote
+send_single_vote() {
+    local option=$1
+    local post_data=""
+    
+    if [ "$option" = "A" ]; then
+        post_data="$POST_DATA_A"
+    else
+        post_data="$POST_DATA_B"
+    fi
+    
+    curl -s -X POST \
+         -H "Content-Type: application/x-www-form-urlencoded" \
+         --data "$post_data" \
+         "$VOTE_URL" > /dev/null
+}
+
+# Function to send votes with concurrency
 send_votes() {
     local option=$1
     local count=$2
-    local post_file=""
-    
-    if [ "$option" = "A" ]; then
-        post_file="$POST_A"
-    else
-        post_file="$POST_B"
-    fi
+    local pids=()
     
     echo "Sending $count votes for option $option..."
-    ab -n "$count" -c "$CONCURRENCY" -p "$post_file" -T "application/x-www-form-urlencoded" "$VOTE_URL"
+    
+    # Send votes in batches to maintain concurrency limit
+    local sent=0
+    while [ $sent -lt $count ]; do
+        # Start up to CONCURRENCY parallel requests
+        local batch_count=0
+        while [ $batch_count -lt $CONCURRENCY ] && [ $sent -lt $count ]; do
+            send_single_vote "$option" &
+            pids+=($!)
+            ((sent++))
+            ((batch_count++))
+        done
+        
+        # Wait for this batch to complete
+        for pid in "${pids[@]}"; do
+            wait "$pid"
+        done
+        pids=()
+    done
 }
 
 # Main voting loop
