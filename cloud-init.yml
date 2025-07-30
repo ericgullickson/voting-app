@@ -44,14 +44,9 @@ runcmd:
           apt-get install -y python3-paramiko
           ;;
         rhel)
-          # For RHEL-based systems, try system package first, fallback to pip
-          if $PKG_MANAGER list available python3-paramiko &>/dev/null; then
-            $PKG_MANAGER install -y python3-paramiko
-          else
-            # Install development packages and use pip with --break-system-packages
-            $PKG_MANAGER install -y python3-devel gcc openssl-devel libffi-devel
-            pip3 install --break-system-packages paramiko
-          fi
+          # For RHEL-based systems, install development packages and use pip
+          $PKG_MANAGER install -y python3-devel gcc openssl-devel libffi-devel
+          pip3 install paramiko
           ;;
         suse)
           # For SUSE-based systems
@@ -60,7 +55,7 @@ runcmd:
           else
             # Install development packages and use pip
             zypper install -y python3-devel gcc libopenssl-devel libffi-devel
-            pip3 install --break-system-packages paramiko
+            pip3 install paramiko
           fi
           ;;
       esac

@@ -4,9 +4,9 @@ A simple distributed application running across multiple Docker containers.
 
 ## Getting started
 
-There are two ways to deploy this application. The first and primary use for this repo is on five separate virtual machines or server. This was tested using the ubuntu cloud 24.04 image. 
+There are two ways to deploy this application. The first and primary use for this repo is on five separate virtual machines. This was tested using the ubuntu cloud 24.04 image but has logic for RHEL based systems. 
 
-Deploy the servers using the [cloud-init.yml](cloud-init.yml) file for server initialization configuration. This installs packages and sets up docker for you. 
+Deploy the servers using the [cloud-init.yml](cloud-init.yml) file for server configuration. This installs packages and sets up docker for you. 
 
 Once they are deployed, log into one and launch the setup app from any of them. 
 ```
@@ -14,6 +14,8 @@ nutanix@ubuntu:~$ voting-app/setup_voting_app.py
 ```
 
 It will prompt you for the IP addresses of all the VM's as well as what options you'd like the votes to be for. It will also give you the ability to use SSH keys or passwords depending on your environment. 
+
+The Docker login uses personal access token for scripted access in the case you are rate limited from Docker.
 
 ```
 nutanix@ubuntu:~$ voting-app/setup_voting_app.py
@@ -25,6 +27,8 @@ Worker: 192.168.252.118
 Database: 192.168.252.128
 Option A (default: Hi-C):
 Option B (default: Tang):
+Docker Hub Username (optional, press Enter to skip): 
+Docker Hub Personal Access Token (dckr_pat_...): 
 SSH Username: nutanix
 SSH Private Key Path (press Enter to auto-detect):
 No SSH keys found in ~/.ssh/

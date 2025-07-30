@@ -25,6 +25,16 @@ def main():
     if not option_b:
         option_b = "Tang"
     
+    docker_username = input("Docker Hub Username (optional, press Enter to skip): ").strip()
+    docker_token = None
+    if docker_username:
+        docker_token = getpass.getpass("Docker Hub Personal Access Token (dckr_pat_...): ").strip()
+        if not docker_token:
+            print("Warning: No Docker token provided, skipping Docker authentication")
+            docker_username = None
+        else:
+            print("Docker authentication will be configured on all servers")
+    
     username = input("SSH Username: ").strip()
     if not username:
         print("Error: Username cannot be empty")
@@ -90,6 +100,22 @@ OPTION_B={option_b}
             stderr_output = stderr.read().decode()
             if stderr_output:
                 print(f"Warning updating .env: {stderr_output}")
+            
+            if docker_username and docker_token:
+                print(f"Logging into Docker Hub as {docker_username}...")
+                login_cmd = f'echo "{docker_token}" | docker login --username "{docker_username}" --password-stdin'
+                stdin, stdout, stderr = ssh.exec_command(login_cmd)
+                stdout_output = stdout.read().decode()
+                stderr_output = stderr.read().decode()
+                
+                if "Login Succeeded" in stdout_output or "Login Succeeded" in stderr_output:
+                    print(f"✓ Docker login successful on {hostname}")
+                else:
+                    print(f"⚠ Docker login warning/error on {hostname}:")
+                    if stdout_output:
+                        print(f"  Output: {stdout_output.strip()}")
+                    if stderr_output:
+                        print(f"  Error: {stderr_output.strip()}")
             
             print(f"Running docker compose for {hostname}...")
             compose_cmd = f'cd /home/nutanix/voting-app/ && docker compose --file ./docker-compose.{hostname}.yml up -d'
