@@ -35,6 +35,14 @@ def main():
     else:
         ssh_key_path = os.path.expanduser(ssh_key_path)
     
+    option_a = input("Option A (default: Hi-C): ").strip()
+    if not option_a:
+        option_a = "Hi-C"
+    
+    option_b = input("Option B (default: Tang): ").strip()
+    if not option_b:
+        option_b = "Tang"
+    
     password = None
     if not ssh_key_path or not os.path.exists(ssh_key_path):
         if ssh_key_path:
@@ -75,8 +83,8 @@ WORKER={ips['Worker']}
 VOTE={ips['Vote']}
 RESULT={ips['Results']}
 REDIS={ips['Redis']}
-OPTION_A=Hi-C
-OPTION_B=Tang
+OPTION_A={option_a}
+OPTION_B={option_b}
 """
             stdin, stdout, stderr = ssh.exec_command(f'cat > /home/nutanix/voting-app/.env << "EOF"\n{env_content}EOF')
             stderr_output = stderr.read().decode()

@@ -25,11 +25,46 @@ packages:
   - git
   - curl
   - ca-certificates
+  - python3
+  - python3-pip
 runcmd:
   # Clone voting app git repo
   - sudo git clone https://github.com/ericgullickson/voting-app.git /home/nutanix/voting-app/
+  # Change ownership of voting-app directory to nutanix user
+  - sudo chown -R nutanix:nutanix /home/nutanix/voting-app/
   # Set default nutanix username and password
   - echo 'nutanix:nutanix/4u' | sudo chpasswd
+  # Install paramiko package based on distribution
+  - |
+    install_paramiko() {
+      case $DISTRO_FAMILY in
+        debian)
+          # Use system package for Debian/Ubuntu to avoid PEP 668 issues
+          apt-get update
+          apt-get install -y python3-paramiko
+          ;;
+        rhel)
+          # For RHEL-based systems, try system package first, fallback to pip
+          if $PKG_MANAGER list available python3-paramiko &>/dev/null; then
+            $PKG_MANAGER install -y python3-paramiko
+          else
+            # Install development packages and use pip with --break-system-packages
+            $PKG_MANAGER install -y python3-devel gcc openssl-devel libffi-devel
+            pip3 install --break-system-packages paramiko
+          fi
+          ;;
+        suse)
+          # For SUSE-based systems
+          if zypper search python3-paramiko &>/dev/null; then
+            zypper install -y python3-paramiko
+          else
+            # Install development packages and use pip
+            zypper install -y python3-devel gcc libopenssl-devel libffi-devel
+            pip3 install --break-system-packages paramiko
+          fi
+          ;;
+      esac
+    }
   # Function to detect package manager and distribution family
   - |
     detect_system() {
@@ -176,6 +211,7 @@ runcmd:
     # Main execution
     detect_system
     install_prerequisites
+    install_paramiko
     install_docker
     
     # Enable and start Docker service
