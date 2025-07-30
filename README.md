@@ -4,22 +4,60 @@ A simple distributed application running across multiple Docker containers.
 
 ## Getting started
 
-Download [Docker Desktop](https://www.docker.com/products/docker-desktop) for Mac or Windows. [Docker Compose](https://docs.docker.com/compose) will be automatically installed. On Linux, make sure you have the latest version of [Compose](https://docs.docker.com/compose/install/).
+There are two ways to deploy this application. The first and primary use for this repo is on five separate virtual machines or server. This was tested using the ubuntu cloud 24.04 image. 
 
-This solution uses Python, Node.js, .NET, with Redis for messaging and Postgres for storage.
+Deploy the servers using the [cloud-init.yml](cloud-init.yml) file for server initialization configuration. This installs packages and sets up docker for you. 
 
-Clone the repo into a directory. 
-
-Edit the .env file with the IP addresses of all the nodes deployed. 
-
-You need to have python and pip installed on your local machine. Run this to install the requirements:
-
-```shell
-  pip install -r requirements.txt
+Once they are deployed, log into one and launch the setup app from any of them. 
 ```
-Then deploy the app giving it the IP addresses of the VM's.
+nutanix@ubuntu:~$ voting-app/setup_voting_app.py
 ```
-  python3 deploy_voting_app.py
+
+It will prompt you for the IP addresses of all the VM's as well as what options you'd like the votes to be for. It will also give you the ability to use SSH keys or passwords depending on your environment. 
+
+```
+nutanix@ubuntu:~$ voting-app/setup_voting_app.py
+Enter IP addresses for each service:
+Vote: 192.168.252.193
+Results: 192.168.252.173
+Redis: 192.168.252.146
+Worker: 192.168.252.118
+Database: 192.168.252.128
+Option A (default: Hi-C):
+Option B (default: Tang):
+SSH Username: nutanix
+SSH Private Key Path (press Enter to auto-detect):
+No SSH keys found in ~/.ssh/
+SSH Password:
+
+Connecting to 192.168.252.193 (Vote)...
+Setting hostname to 'vote'...
+Updating .env file with IP addresses...
+Running docker compose for vote...
+```
+
+Once it's finished you can navigate to the Vote IP to cast your votes. The web pages are standard HTTP. i.e. http://192.168.252.193
+
+If you want to randomly generate votes you can use the [generate-votes.sh](generate-votes.sh) file. 
+
+```
+nutanix@vote:~$ voting-app/generate-votes.sh
+Random Voting Script
+===================
+
+Enter vote URL [default: http://vote/]: http://192.168.252.193
+Using URL: http://192.168.252.193
+
+Voting mode:
+1) Enter total number of votes
+2) Run continuously (CTRL+C to stop)
+
+Choose option (1 or 2): 2
+Running in infinite mode - press CTRL+C to stop
+
+Starting infinite random voting process...
+Sending 60 votes for option A...
+Waiting 5 seconds before next batch... (Total votes sent: 60)
 ```
 
 ## Run the app in Kubernetes
@@ -55,5 +93,4 @@ kubectl delete -f k8s-specifications/
 The voting application only accepts one vote per client browser. It does not register additional votes if a vote has already been submitted from a client.
 
 This isn't an example of a properly architected perfectly designed distributed app... it's just a simple
-example of the various types of pieces and languages you might see (queues, persistent data, etc), and how to
-deal with them in Docker at a basic level.
+example of the various types of pieces and languages you might see (queues, persistent data, etc). It's purpose is for demostrating and testing infrastructure or security. 
